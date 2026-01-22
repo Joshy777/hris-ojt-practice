@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { login } from '../pages/login-josh';
-import { createPMF } from '../helpers/pmf.helper';
+import { createPMF } from '../utils/helpers/pmf.helper';
 
 test('Employee Movement Full Module Flow', async ({ page }) => {
   // LOGIN
