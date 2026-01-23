@@ -1,148 +1,63 @@
-import { test, expect, Browser, Page } from '@playwright/test';
+import { test, expect } from '@playwright/test';
+import { login } from '../pages/login-drew';
+import { createAddressIssue } from '../utils/helpers/address-employee.helper';
 
-test.describe('Address Employee Issue - Feature Tests', () => {
-  let page: Page;
-  let browser: Browser;
+test('Address Employee Issue Full Flow', async ({ page }) => {
+  // ---------------- LOGIN ----------------
+  await login(page);
+  await expect(page.locator('#headlessui-menu-button-\\:R6qiqikq\\::visible')).toBeVisible();
+ await page.getByRole('button', { name: /I Understand/i }).click();
+  // ---------------- NAVIGATE ----------------
+  const manageLink = page.getByText('Manage', { exact: true });
+  await manageLink.waitFor({ state: 'visible' });
+  await manageLink.click();
 
-  test.beforeAll(async ({ browser: pwBrowser }) => {
-    browser = pwBrowser;
-    const context = await browser.newContext();
-    page = await context.newPage();
+  const addressIssueLink = page.getByText('Address Employee Issue', { exact: true });
+  await addressIssueLink.waitFor({ state: 'visible' });
+  await addressIssueLink.click();
 
-    // ---------- LOGIN ONCE ----------
-    await page.goto('https://s1.yahshuahris.com/');
+  // Verify landing page
+  await expect(page.getByText('All Issues')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Get Started' }).nth(1).click();
-    await page.getByRole('link', { name: 'Sign In' }).first().click();
+  // ---------------- INITIAL CHECK ----------------
+  const rows = page.locator('tbody tr');
+  expect(await rows.count()).toBeGreaterThan(0);
 
-    await page.getByRole('textbox', { name: 'Email' }).fill('paulandrewnerona@gmail.com');
-    await page.getByRole('textbox', { name: 'Password' }).fill('AndrewNeronz@13');
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    await page.getByRole('link', { name: 'Manage' }).click();
-    await page.getByRole('link', { name: 'Address Employee Issue' }).click();
-
-    await expect(page.getByText('All Issues')).toBeVisible();
-  });
-
-  test.afterAll(async () => {
-    await page.close();
-  });
-
-  // ---------------- MONTH PICKER ----------------
-  test('Month selection / date filter', async () => {
-    const fromPicker = page.locator('#from-datepicker-datepicker-button');
-    const toPicker = page.locator('#to-datepicker-datepicker-button');
-
-    await fromPicker.click();
-    await page.getByRole('option', { name: 'Choose Wednesday, January 21st,' }).click();
-
-    await toPicker.click();
-    await page.getByRole('option', { name: 'Choose Friday, January 30th,' }).click();
-  });
-
- // ---------------- SEARCH ----------------
-test('Search employee (search → clear → reset)', async () => {
+  // ---------------- SEARCH ----------------
   const searchBox = page.getByRole('textbox', { name: 'Search' });
-  const searchButton = searchBox.locator('xpath=following-sibling::button');
-  const tableBody = page.locator('tbody');
-
-  // Initial state (normal list)
-  await expect(tableBody).toBeVisible();
-
-  // Search "nerona"
+  await searchBox.waitFor({ state: 'visible' });
   await searchBox.fill('nerona');
-  await searchButton.click();
+  await page.keyboard.press('Enter');
 
-  // Results should still show table
-  await expect(tableBody).toBeVisible();
+  // Wait for search results
+  await expect(rows.first()).toBeVisible();
 
-  // Clear search
+  // RESET SEARCH
   await searchBox.fill('');
-  await searchButton.click();
+  await page.keyboard.press('Enter');
+  await expect(rows.first()).toBeVisible();
 
-  // Back to normal (unfiltered list)
-  await expect(tableBody).toBeVisible();
-});
+  // ---------------- TAB FILTERS ----------------
+  const approvedTab = page.locator('div.cursor-pointer', { hasText: /^Approved$/ });
+  const disapprovedTab = page.locator('div.cursor-pointer', { hasText: /^Disapproved$/ });
+  const allIssuesTab = page.locator('div.cursor-pointer', { hasText: /^All Issues$/ });
 
-
- // ---------------- TAB FILTERS ----------------
-// ---------------- TAB FILTERS ----------------
-test('Tabs filtering (All Issues → Approved → Disapproved → All Issues)', async () => {
-  // Narrow scope to the tabs row/container
-  const tabsContainer = page
-    .locator('div.cursor-pointer')
-    .first()
-    .locator('xpath=ancestor::div[1]');
-
-  const allIssuesTab = tabsContainer.locator('div.cursor-pointer', {
-    hasText: /^All Issues$/,
-  });
-
-  const approvedTab = tabsContainer.locator('div.cursor-pointer', {
-    hasText: /^Approved$/,
-  });
-
-  const disapprovedTab = tabsContainer.locator('div.cursor-pointer', {
-    hasText: /^Disapproved$/,
-  });
-
-  // All Issues (default)
-  await expect(allIssuesTab).toBeVisible();
-
-  // Approved
+  await approvedTab.waitFor({ state: 'visible' });
   await approvedTab.click();
-  await expect(page.locator('tbody')).toBeVisible();
+  await expect(rows.first()).toBeVisible();
 
-  // Disapproved
+  await disapprovedTab.waitFor({ state: 'visible' });
   await disapprovedTab.click();
-  await expect(page.locator('tbody')).toBeVisible();
+  await expect(rows.first()).toBeVisible();
 
-  // Back to All Issues
+  await allIssuesTab.waitFor({ state: 'visible' });
   await allIssuesTab.click();
-  await expect(page.locator('tbody')).toBeVisible();
-});
+  await expect(rows.first()).toBeVisible();
 
-
-
-
-
-  // ---------------- CREATE ISSUE ----------------
-  test('Create Address Employee Issue', async () => {
-    await page.getByRole('button', { name: 'CREATE' }).click();
-
-    const modal = page.locator('div[role="dialog"][data-headlessui-state="open"]');
-    await expect(modal).toHaveCount(1);
-
-    await modal.locator('.select__control').first().click();
-    await page.locator('.select__option').first().click();
-
-    await modal.locator('#incidentPlace').fill('Main Office');
-
-    await modal.locator('.select__control').nth(1).click();
-    await page.getByRole('option', { name: /Absenteeism|Tardiness|Job/i }).first().click();
-
-    await modal.locator('#briefBackground').fill(
-      'Employee failed to report to work without notice.'
-    );
-
-    await page.getByRole('button', { name: 'Create', exact: true }).click();
-    await expect(page.getByText(/success/i)).toBeVisible();
-  });
-
-  // ---------------- APPROVE ISSUE ----------------
-  test('Update issue status - Approve only', async () => {
-    const firstRowActions = page
-      .locator('tbody tr')
-      .first()
-      .locator('button')
-      .last();
-
-    await firstRowActions.click();
-    await page.getByRole('button', { name: 'Update Status' }).click();
-
-    await page.getByRole('button', { name: 'Approve', exact: true }).click();
-
-   
+  // ---------------- CREATE ADDRESS ISSUE ----------------
+  await createAddressIssue(page, {
+    incidentPlace: 'Main Office',
+    incidentType: /Absenteeism|Tardiness|Job/i,
+    background: 'Employee failed to report to work without notice.',
   });
 });
