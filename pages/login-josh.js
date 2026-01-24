@@ -1,3 +1,5 @@
+import { expect, Page } from '@playwright/test';
+
 export async function login(page) {
   await page.goto('https://s1.yahshuahris.com/login');
   await page.getByRole('textbox', { name: 'Email' })
