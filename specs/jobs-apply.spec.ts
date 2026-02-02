@@ -3,7 +3,7 @@ import { test, expect } from '@playwright/test';
 test.describe('Job Listing Page', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('https://s1.yahshuahris.com/jobs'); 
+    await page.goto('/jobs'); 
   });
 
   

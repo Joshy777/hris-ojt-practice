@@ -1,4 +1,5 @@
 import { expect, Page} from '@playwright/test';
+import { goToEmployeeMovement } from '../../pages/employeeMovement.page';
 
 // SEARCH EMPLOYEE
 export async function searchEmployee(page: Page, name: string) {
@@ -79,3 +80,59 @@ export async function createPMF(
 
 
 
+export async function createPMFmissing(page: Page,
+  {
+    employeeName,
+    positionValue,
+    employmentStatusValue,
+    startDateOption,
+    regularizationType,
+    salaryChangeOption,
+  }: PMFOptions
+) {
+  // Open PMF modal
+  await page.click('button:has-text("Create PMF")');
+  await expect(
+    page.locator('text=Create Personal Movement Form (PMF)')
+  ).toBeVisible();
+
+  await page.getByRole('textbox', { name: 'Start Date*' }).click();
+  await page.getByRole('option', { name: startDateOption }).click();
+
+  await page.getByRole('button', { name: 'Submit' }).click();
+}
+
+
+
+export async function approvePMF(page: Page) {
+
+await goToEmployeeMovement(page);
+  // Open latest PMF
+  const firstRow = page.locator('tbody tr').first();
+  await firstRow.locator('button').first().click();
+  // Recommendation
+   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByRole('textbox', { name: 'Your Recommendation' })
+    .fill('Reviewed and approved.');
+
+  // Draw signature
+  await page.getByRole('button', { name: 'Draw' }).click();
+
+  const canvas = page.locator('canvas');
+  await page.locator('canvas').click({
+    position: {
+      x: 253,
+      y: 55
+    }
+  });
+
+  await page.getByRole('button', { name: 'Sign' }).click();
+
+
+  // Approve
+  await page.locator('button:has-text("Approve")').click({ timeout: 60000 });
+
+
+  // Validation
+  await expect(page.getByText('Approval processed successfully.')).toBeVisible();
+}

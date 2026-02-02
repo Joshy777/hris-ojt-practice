@@ -2,7 +2,7 @@ import { Page, expect } from '@playwright/test';
 
 // ASSERTIONS FOR EMPLOYEE MOVEMENT PAGE
 export async function expectTableHasRows(page: Page) {
-  await expect(page.locator('tbody tr')).toHaveCount(1);
+  await expect(page.locator('tbody tr')).toHaveCount(5);
 }
 
 
