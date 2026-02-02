@@ -13,7 +13,6 @@ test('Employee Movement Full Module Flow', async ({ page }) => {
   .getByRole('button', { name: 'Open user menu profile logo' })
   .waitFor({ state: 'visible' });
 
-  // NAVIGATE
   await goToEmployeeMovement(page);
 
   
